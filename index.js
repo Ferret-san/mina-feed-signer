@@ -1,13 +1,14 @@
 const Koa = require("koa");
 const Router = require("@koa/router");
 const { isReady, PrivateKey, Field, Signature } = require("snarkyjs");
+const { JSONPath } = require('jsonpath-plus');
 
 const PORT = process.env.PORT || 3000;
 
 const app = new Koa();
 const router = new Router();
 
-async function getETHUSD() {
+async function signPrice() {
   // We need to wait for SnarkyJS to finish loading before we can do anything
   await isReady;
 
@@ -23,15 +24,18 @@ async function getETHUSD() {
   const priceUrl =
     'https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD';
   const pricePath = 'RAW.ETH.USD.PRICE';
-  const timePath = 'RAW.ETH.USD.PRICE';
+  const timePath = 'RAW.ETH.USD.LASTUPDATE';
   const response = await fetch(priceUrl);
+
   const data = await response.json();
-  const priceResult = JSONPath({ path: pricePath, json: data });
+  console.log("data: ", data)
+  const priceResult = data.RAW.ETH.USD.PRICE;
   console.log("priceResult", priceResult);
-  const r100 = Math.floor((priceResult[0] * 100));
+  const r100 = Math.floor((priceResult * 100));
   console.log("r100", r100);
-  const timeResult = JSONPath({ path: timePath, json: data })
+  const timeResult = data.RAW.ETH.USD.LASTUPDATE
   console.log("timeResult", timeResult);
+
   // We compute the public key associated with our private key
   const publicKey = privateKey.toPublicKey();
 
@@ -42,7 +46,7 @@ async function getETHUSD() {
 
   // Use our private key to sign an array of Fields containing the users id and
   // credit score
-  const signature = Signature.create(privateKey, [id, creditScore]);
+  const signature = Signature.create(privateKey, [price, time]);
 
   return {
     data: { price: price, time: time },
@@ -51,8 +55,8 @@ async function getETHUSD() {
   };
 }
 
-router.get("/price", async () => {
-  ctx.body = await getETHUSD();
+router.get("/price", async (ctx) => {
+  ctx.body = await signPrice();
 });
 
 app.use(router.routes()).use(router.allowedMethods());
