@@ -4,7 +4,7 @@ spec:
     - environment_slug: node-js
       git:
         branch: main
-        repo_clone_url: https://github.com/jackryanservia/mina-credit-score-signer.git
+        repo_clone_url: https://github.com/Ferret-san/mina-feed-signer.git
       name: mina-price-feed-signer
       http_port: 8080
       instance_count: 1
